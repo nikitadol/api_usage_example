@@ -230,6 +230,7 @@ CountryFlags _$CountryFlagsFromJson(Map<String, dynamic> json) {
 /// @nodoc
 mixin _$CountryFlags {
   String get png => throw _privateConstructorUsedError;
+  String get alt => throw _privateConstructorUsedError;
 
   /// Serializes this CountryFlags to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -247,7 +248,7 @@ abstract class $CountryFlagsCopyWith<$Res> {
           CountryFlags value, $Res Function(CountryFlags) then) =
       _$CountryFlagsCopyWithImpl<$Res, CountryFlags>;
   @useResult
-  $Res call({String png});
+  $Res call({String png, String alt});
 }
 
 /// @nodoc
@@ -266,11 +267,16 @@ class _$CountryFlagsCopyWithImpl<$Res, $Val extends CountryFlags>
   @override
   $Res call({
     Object? png = null,
+    Object? alt = null,
   }) {
     return _then(_value.copyWith(
       png: null == png
           ? _value.png
           : png // ignore: cast_nullable_to_non_nullable
+              as String,
+      alt: null == alt
+          ? _value.alt
+          : alt // ignore: cast_nullable_to_non_nullable
               as String,
     ) as $Val);
   }
@@ -284,7 +290,7 @@ abstract class _$$CountryFlagsImplCopyWith<$Res>
       __$$CountryFlagsImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String png});
+  $Res call({String png, String alt});
 }
 
 /// @nodoc
@@ -301,11 +307,16 @@ class __$$CountryFlagsImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? png = null,
+    Object? alt = null,
   }) {
     return _then(_$CountryFlagsImpl(
       png: null == png
           ? _value.png
           : png // ignore: cast_nullable_to_non_nullable
+              as String,
+      alt: null == alt
+          ? _value.alt
+          : alt // ignore: cast_nullable_to_non_nullable
               as String,
     ));
   }
@@ -314,17 +325,19 @@ class __$$CountryFlagsImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$CountryFlagsImpl with DiagnosticableTreeMixin implements _CountryFlags {
-  _$CountryFlagsImpl({required this.png});
+  _$CountryFlagsImpl({required this.png, required this.alt});
 
   factory _$CountryFlagsImpl.fromJson(Map<String, dynamic> json) =>
       _$$CountryFlagsImplFromJson(json);
 
   @override
   final String png;
+  @override
+  final String alt;
 
   @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'CountryFlags(png: $png)';
+    return 'CountryFlags(png: $png, alt: $alt)';
   }
 
   @override
@@ -332,7 +345,8 @@ class _$CountryFlagsImpl with DiagnosticableTreeMixin implements _CountryFlags {
     super.debugFillProperties(properties);
     properties
       ..add(DiagnosticsProperty('type', 'CountryFlags'))
-      ..add(DiagnosticsProperty('png', png));
+      ..add(DiagnosticsProperty('png', png))
+      ..add(DiagnosticsProperty('alt', alt));
   }
 
   @override
@@ -340,12 +354,13 @@ class _$CountryFlagsImpl with DiagnosticableTreeMixin implements _CountryFlags {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$CountryFlagsImpl &&
-            (identical(other.png, png) || other.png == png));
+            (identical(other.png, png) || other.png == png) &&
+            (identical(other.alt, alt) || other.alt == alt));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, png);
+  int get hashCode => Object.hash(runtimeType, png, alt);
 
   /// Create a copy of CountryFlags
   /// with the given fields replaced by the non-null parameter values.
@@ -364,13 +379,17 @@ class _$CountryFlagsImpl with DiagnosticableTreeMixin implements _CountryFlags {
 }
 
 abstract class _CountryFlags implements CountryFlags {
-  factory _CountryFlags({required final String png}) = _$CountryFlagsImpl;
+  factory _CountryFlags(
+      {required final String png,
+      required final String alt}) = _$CountryFlagsImpl;
 
   factory _CountryFlags.fromJson(Map<String, dynamic> json) =
       _$CountryFlagsImpl.fromJson;
 
   @override
   String get png;
+  @override
+  String get alt;
 
   /// Create a copy of CountryFlags
   /// with the given fields replaced by the non-null parameter values.

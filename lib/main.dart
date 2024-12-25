@@ -37,17 +37,18 @@ class AppRouter extends RootStackRouter {
       ];
 }
 
-@Riverpod(
-  keepAlive: true,
-)
-Dio dio(Ref red) {
-  return Dio(BaseOptions(
+@riverpod
+Dio dio(Ref ref) {
+  final dio = Dio(BaseOptions(
     baseUrl: 'https://restcountries.com/v3.1',
   ));
+
+  ref.onDispose(dio.close);
+
+  return dio;
 }
 
 @Riverpod(
-  keepAlive: true,
   dependencies: [
     dio,
   ],
@@ -58,7 +59,9 @@ RestCountriesClient restCountriesClient(Ref ref) {
   );
 }
 
-@RestApi()
+@RestApi(
+  parser: Parser.FlutterCompute,
+)
 abstract class RestCountriesClient {
   factory RestCountriesClient(Dio dio) = _RestCountriesClient;
 
@@ -68,7 +71,24 @@ abstract class RestCountriesClient {
       'name',
       'flags',
     ],
+    @CancelRequest() CancelToken? cancelToken,
   });
+
+  @GET('/translation/{name}')
+  Future<List<CountryGeneral>> searchByTranslation({
+    @Path('name') required String name,
+    @Query('fields') List<String> fields = const [
+      'name',
+      'flags',
+    ],
+    @CancelRequest() CancelToken? cancelToken,
+  });
+}
+
+List<CountryGeneral> deserializeCountryGeneralList(
+  List<Map<String, dynamic>> json,
+) {
+  return json.map((e) => CountryGeneral.fromJson(e)).toList();
 }
 
 @riverpod
@@ -111,6 +131,7 @@ class CountryName with _$CountryName {
 class CountryFlags with _$CountryFlags {
   factory CountryFlags({
     required String png,
+    required String alt,
   }) = _CountryFlags;
 
   factory CountryFlags.fromJson(Map<String, Object?> json) =>
@@ -130,22 +151,19 @@ class CountryGeneral with _$CountryGeneral {
 
 typedef CountryModel = ({
   String imageUrl,
+  String imageAlt,
   String name,
   String otherNames,
 });
 
-@riverpod
-Future<List<CountryModel>> allCountries(
-  Ref ref,
-) async {
-  final list = await ref.watch(restCountriesClientProvider).all();
-
+List<CountryModel> sortAndPrepare(List<CountryGeneral> list) {
   list.sort((a, b) => a.name.official.compareTo(b.name.official));
 
   return [
     for (final item in list)
       (
         imageUrl: item.flags.png,
+        imageAlt: item.flags.alt,
         name: item.name.official,
         otherNames: item.name.nativeName.values
             .map((e) => e.official)
@@ -155,9 +173,139 @@ Future<List<CountryModel>> allCountries(
   ];
 }
 
+@Riverpod(
+  dependencies: [
+    restCountriesClient,
+  ],
+)
+Future<List<CountryModel>> allCountries(
+  Ref ref,
+) async {
+  final restCountriesClient = ref.watch(restCountriesClientProvider);
+
+  final cancelToken = ref.dioCancelToken();
+
+  final list = await restCountriesClient.all(
+    cancelToken: cancelToken,
+  );
+
+  return sortAndPrepare(list);
+}
+
+@Riverpod(
+  dependencies: [
+    restCountriesClient,
+  ],
+)
+Future<List<CountryModel>> searchByTranslation(
+  Ref ref, {
+  required String term,
+}) async {
+  final restCountriesClient = ref.watch(restCountriesClientProvider);
+
+  term = term.trim();
+
+  if (term.isEmpty) {
+    return const [];
+  }
+
+  await ref.debounce();
+
+  final cancelToken = ref.dioCancelToken();
+
+  final list = await restCountriesClient.searchByTranslation(
+    name: term,
+    cancelToken: cancelToken,
+  );
+
+  return sortAndPrepare(list);
+}
+
+extension RefExtension on Ref {
+  CancelToken dioCancelToken() {
+    final cancelToken = CancelToken();
+    onDispose(cancelToken.cancel);
+
+    return cancelToken;
+  }
+
+  Future<void> debounce([
+    Duration duration = const Duration(milliseconds: 400),
+  ]) async {
+    var didDispose = false;
+    onDispose(() => didDispose = true);
+
+    await Future<void>.delayed(duration);
+
+    if (didDispose) {
+      throw Exception('Cancelled');
+    }
+  }
+}
+
 @RoutePage()
 class AllCountriesListScreen extends StatelessWidget {
   const AllCountriesListScreen({super.key});
+
+  Widget searchViewBuilder(Iterable<Widget> items) {
+    final String term;
+
+    if (items case [final Text text]) {
+      term = text.data?.trim() ?? '';
+    } else {
+      term = '';
+    }
+
+    if (term.isEmpty) {
+      return Center(
+        child: Text('Type something'),
+      );
+    }
+
+    return Consumer(
+      builder: (context, ref, child) {
+        final items = ref.watch(searchByTranslationProvider(term: term));
+
+        return MediaQuery.removePadding(
+          context: context,
+          removeTop: true,
+          child: items.when(
+            data: (items) {
+              return ListView.builder(
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  final item = items[index];
+
+                  return ListTile(
+                    titleAlignment: ListTileTitleAlignment.titleHeight,
+                    onTap: () {},
+                    leading: SizedBox(
+                      width: 98,
+                      child: Align(
+                        alignment: Alignment.topLeft,
+                        child: Image.network(
+                          item.imageUrl,
+                          semanticLabel: item.imageAlt,
+                        ),
+                      ),
+                    ),
+                    title: Text(item.name),
+                    subtitle: Text(item.otherNames),
+                  );
+                },
+              );
+            },
+            error: (e, s) => Center(
+              child: Text('$e'),
+            ),
+            loading: () => const Center(
+              child: CircularProgressIndicator(),
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -170,19 +318,20 @@ class AllCountriesListScreen extends StatelessWidget {
               onPressed: controller.openView,
               icon: const Icon(Icons.search),
             ),
-            suggestionsBuilder: (context, controller) {
-              return [];
-            },
+            suggestionsBuilder: (context, controller) => [
+              // Workaround for using riverpod with SearchAnchor
+              Text(controller.text),
+            ],
+            viewBuilder: searchViewBuilder,
           ),
         ],
       ),
       body: Consumer(
         builder: (context, ref, child) {
-          final List<CountryModel> items =
-              ref.watch(allCountriesProvider).maybeWhen(
-                    orElse: () => const [],
-                    data: (value) => value,
-                  );
+          final items = ref.watch(allCountriesProvider).maybeWhen(
+                orElse: () => const <CountryModel>[],
+                data: (value) => value,
+              );
 
           return ListView.separated(
             itemCount: items.length,
@@ -198,6 +347,7 @@ class AllCountriesListScreen extends StatelessWidget {
                     alignment: Alignment.topLeft,
                     child: Image.network(
                       item.imageUrl,
+                      semanticLabel: item.imageAlt,
                     ),
                   ),
                 ),
