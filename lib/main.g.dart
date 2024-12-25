@@ -258,7 +258,7 @@ final themeProvider =
 // ignore: unused_element
 typedef ThemeRef
     = AutoDisposeProviderRef<({ThemeData lightTheme, ThemeData darkTheme})>;
-String _$allCountriesHash() => r'bbaa612823fc859a1004f7b4003c478296e75225';
+String _$allCountriesHash() => r'8e4a8a9356d55839645cbdc2c2981c049b2c35f5';
 
 /// See also [allCountries].
 @ProviderFor(allCountries)
@@ -279,7 +279,7 @@ final allCountriesProvider =
 // ignore: unused_element
 typedef AllCountriesRef = AutoDisposeFutureProviderRef<List<CountryModel>>;
 String _$searchByTranslationHash() =>
-    r'b265fb37ff6fd3c746d2debef59c06e98b233d7e';
+    r'85b215386cbc92a6ee7c90b2fd9c5b75791366c6';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -439,5 +439,29 @@ class _SearchByTranslationProviderElement
   @override
   String get term => (origin as SearchByTranslationProvider).term;
 }
+
+String _$restCountriesRepositoryHash() =>
+    r'4a218a14006908005c2910719ce505ab37367df3';
+
+/// See also [restCountriesRepository].
+@ProviderFor(restCountriesRepository)
+final restCountriesRepositoryProvider =
+    AutoDisposeProvider<RestCountriesRepository>.internal(
+  restCountriesRepository,
+  name: r'restCountriesRepositoryProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$restCountriesRepositoryHash,
+  dependencies: <ProviderOrFamily>[restCountriesClientProvider],
+  allTransitiveDependencies: <ProviderOrFamily>{
+    restCountriesClientProvider,
+    ...?restCountriesClientProvider.allTransitiveDependencies
+  },
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef RestCountriesRepositoryRef
+    = AutoDisposeProviderRef<RestCountriesRepository>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
