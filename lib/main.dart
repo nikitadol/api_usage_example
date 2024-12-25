@@ -71,12 +71,24 @@ abstract class RestCountriesClient {
   });
 }
 
+@riverpod
+({ThemeData lightTheme, ThemeData darkTheme}) theme(Ref ref) {
+  return (
+    lightTheme: ThemeData.light(),
+    darkTheme: ThemeData.dark(),
+  );
+}
+
 class RootApp extends ConsumerWidget {
   const RootApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final (:lightTheme, :darkTheme) = ref.watch(themeProvider);
+
     return MaterialApp.router(
+      theme: lightTheme,
+      darkTheme: darkTheme,
       debugShowCheckedModeBanner: false,
       routerConfig: ref.watch(routerProvider).config(),
     );
@@ -159,7 +171,6 @@ class AllCountriesListScreen extends StatelessWidget {
               icon: const Icon(Icons.search),
             ),
             suggestionsBuilder: (context, controller) {
-              controller.text;
               return [];
             },
           ),

@@ -191,6 +191,24 @@ final restCountriesClientProvider = Provider<RestCountriesClient>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef RestCountriesClientRef = ProviderRef<RestCountriesClient>;
+String _$themeHash() => r'e59a47c40f112f4bf3787ead7e8db8ace3ec55be';
+
+/// See also [theme].
+@ProviderFor(theme)
+final themeProvider =
+    AutoDisposeProvider<({ThemeData lightTheme, ThemeData darkTheme})>.internal(
+  theme,
+  name: r'themeProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$themeHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef ThemeRef
+    = AutoDisposeProviderRef<({ThemeData lightTheme, ThemeData darkTheme})>;
 String _$allCountriesHash() => r'd23b7005a003518b0c8fefc623ce296983aad6d4';
 
 /// See also [allCountries].
