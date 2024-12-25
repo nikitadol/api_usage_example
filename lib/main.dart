@@ -431,9 +431,8 @@ class AllCountriesListScreen extends StatelessWidget {
 
     return Consumer(
       builder: (context, ref, child) {
-        final items = ref.watch(countriesSearchByTranslationProvider(
-          term: term,
-        ));
+        final provider = countriesSearchByTranslationProvider(term: term);
+        final items = ref.watch(provider);
 
         return MediaQuery.removePadding(
           context: context,
@@ -451,8 +450,10 @@ class AllCountriesListScreen extends StatelessWidget {
                 },
               );
             },
-            error: (e, s) => Center(
-              child: Text('$e'),
+            error: (e, s) => AppErrorWidget(
+              error: e,
+              stackTrace: s,
+              retry: () => ref.invalidate(provider),
             ),
             loading: () => const Center(
               child: CircularProgressIndicator(),
@@ -484,22 +485,29 @@ class AllCountriesListScreen extends StatelessWidget {
       ),
       body: Consumer(
         builder: (context, ref, child) {
-          final items = ref.watch(countriesAllProvider).maybeWhen(
-                orElse: () => const <CountryModel>[],
-                data: (value) => value,
-              );
+          final provider = countriesAllProvider;
 
-          return ListView.separated(
-            itemCount: items.length,
-            itemBuilder: (context, index) {
-              final item = items[index];
+          return ref.watch(provider).when(
+                data: (items) => ListView.separated(
+                  itemCount: items.length,
+                  itemBuilder: (context, index) {
+                    final item = items[index];
 
-              return CountryModelWidget(
-                item: item,
+                    return CountryModelWidget(
+                      item: item,
+                    );
+                  },
+                  separatorBuilder: (context, index) => const Divider(),
+                ),
+                error: (e, s) => AppErrorWidget(
+                  error: e,
+                  stackTrace: s,
+                  retry: () => ref.invalidate(provider),
+                ),
+                loading: () => const Center(
+                  child: CircularProgressIndicator(),
+                ),
               );
-            },
-            separatorBuilder: (context, index) => const Divider(),
-          );
         },
       ),
     );
@@ -580,13 +588,18 @@ class CountryInfoScreen extends StatelessWidget {
       ),
       body: Consumer(
         builder: (context, ref, child) {
-          return ref
-              .watch(countryByNameProvider(
-                fullName: name,
-              ))
-              .maybeWhen(
-                orElse: () => const Center(
+          final provider = countryByNameProvider(
+            fullName: name,
+          );
+
+          return ref.watch(provider).when(
+                loading: () => const Center(
                   child: CircularProgressIndicator(),
+                ),
+                error: (e, s) => AppErrorWidget(
+                  error: e,
+                  stackTrace: s,
+                  retry: () => ref.invalidate(provider),
                 ),
                 data: (data) {
                   return ListView(
@@ -616,26 +629,29 @@ class CountryInfoScreen extends StatelessWidget {
                         ),
                         const Divider(),
                       ],
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (data.flags.png case final png?
-                              when png.isNotEmpty)
-                            Expanded(
-                              child: _TextAndImage(
-                                text: 'Flag',
-                                data: data.flags,
+                      FractionallySizedBox(
+                        widthFactor: 0.8,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (data.flags.png case final png?
+                                when png.isNotEmpty)
+                              Expanded(
+                                child: _TextAndImage(
+                                  text: 'Flag',
+                                  data: data.flags,
+                                ),
                               ),
-                            ),
-                          if (data.coatOfArms.png case final png?
-                              when png.isNotEmpty)
-                            Expanded(
-                              child: _TextAndImage(
-                                text: 'Coat of arms',
-                                data: data.coatOfArms,
+                            if (data.coatOfArms.png case final png?
+                                when png.isNotEmpty)
+                              Expanded(
+                                child: _TextAndImage(
+                                  text: 'Coat of arms',
+                                  data: data.coatOfArms,
+                                ),
                               ),
-                            ),
-                        ],
+                          ],
+                        ),
                       ),
                       const Divider(),
                       if (data.tld case final tld when tld.isNotEmpty) ...[
@@ -719,11 +735,9 @@ final class _TextAndImage extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
+        spacing: 8,
         children: [
           Text(text),
-          const SizedBox(
-            height: 8,
-          ),
           Image.network(
             data.png ?? '',
             semanticLabel: data.alt,
@@ -758,6 +772,60 @@ final class _KeyValueItem extends StatelessWidget {
             text: valueText,
           ),
         ],
+      ),
+    );
+  }
+}
+
+class AppErrorWidget extends StatelessWidget {
+  const AppErrorWidget({
+    super.key,
+    required this.error,
+    required this.stackTrace,
+    this.retry,
+  });
+
+  final Object error;
+  final StackTrace stackTrace;
+  final void Function()? retry;
+
+  @override
+  Widget build(BuildContext context) {
+    final String text;
+    if (error case final AppError error) {
+      text = error.map(
+        notFound: (error) => 'Not found',
+        unknown: (error) => 'Unknown error',
+      );
+    } else {
+      text = '$error';
+    }
+
+    final bool allowRetry;
+    if (error case final AppError error) {
+      allowRetry = error.maybeMap(
+        orElse: () => true,
+        notFound: (_) => false,
+      );
+    } else {
+      allowRetry = true;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 8,
+          children: [
+            Text(text),
+            if (retry case final retry? when allowRetry)
+              TextButton(
+                onPressed: retry,
+                child: Text('Retry'),
+              ),
+          ],
+        ),
       ),
     );
   }
