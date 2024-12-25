@@ -17,24 +17,11 @@ _$CountryNameImpl _$$CountryNameImplFromJson(Map<String, dynamic> json) =>
           const {},
     );
 
-Map<String, dynamic> _$$CountryNameImplToJson(_$CountryNameImpl instance) =>
-    <String, dynamic>{
-      'common': instance.common,
-      'official': instance.official,
-      'nativeName': instance.nativeName,
-    };
-
 _$CountryFlagsImpl _$$CountryFlagsImplFromJson(Map<String, dynamic> json) =>
     _$CountryFlagsImpl(
-      png: json['png'] as String,
-      alt: json['alt'] as String,
+      png: json['png'] as String?,
+      alt: json['alt'] as String?,
     );
-
-Map<String, dynamic> _$$CountryFlagsImplToJson(_$CountryFlagsImpl instance) =>
-    <String, dynamic>{
-      'png': instance.png,
-      'alt': instance.alt,
-    };
 
 _$CountryGeneralImpl _$$CountryGeneralImplFromJson(Map<String, dynamic> json) =>
     _$CountryGeneralImpl(
@@ -42,12 +29,40 @@ _$CountryGeneralImpl _$$CountryGeneralImplFromJson(Map<String, dynamic> json) =>
       flags: CountryFlags.fromJson(json['flags'] as Map<String, dynamic>),
     );
 
-Map<String, dynamic> _$$CountryGeneralImplToJson(
-        _$CountryGeneralImpl instance) =>
-    <String, dynamic>{
-      'name': instance.name,
-      'flags': instance.flags,
-    };
+_$CountryFullImpl _$$CountryFullImplFromJson(Map<String, dynamic> json) =>
+    _$CountryFullImpl(
+      name: CountryName.fromJson(json['name'] as Map<String, dynamic>),
+      tld: (json['tld'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+          const [],
+      capital: (json['capital'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
+      altSpellings: (json['altSpellings'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
+      languages: (json['languages'] as Map<String, dynamic>?)?.map(
+            (k, e) => MapEntry(k, e as String),
+          ) ??
+          const {},
+      translations: (json['translations'] as Map<String, dynamic>?)?.map(
+            (k, e) =>
+                MapEntry(k, CountryName.fromJson(e as Map<String, dynamic>)),
+          ) ??
+          const {},
+      area: (json['area'] as num).toDouble(),
+      flag: json['flag'] as String,
+      population: (json['population'] as num).toInt(),
+      timezones: (json['timezones'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
+      flags: CountryFlags.fromJson(json['flags'] as Map<String, dynamic>),
+      coatOfArms:
+          CountryFlags.fromJson(json['coatOfArms'] as Map<String, dynamic>),
+      startOfWeek: json['startOfWeek'] as String,
+    );
 
 // **************************************************************************
 // RetrofitGenerator
@@ -142,6 +157,47 @@ class _RestCountriesClient implements RestCountriesClient {
     try {
       _value = await compute(
         deserializeCountryGeneralList,
+        _result.data!.cast<Map<String, dynamic>>(),
+      );
+    } on Object catch (e, s) {
+      errorLogger?.logError(e, s, _options);
+      rethrow;
+    }
+    return _value;
+  }
+
+  @override
+  Future<List<CountryFull>> byName({
+    required String name,
+    CancelToken? cancelToken,
+  }) async {
+    final _extra = <String, dynamic>{};
+    final queryParameters = <String, dynamic>{};
+    queryParameters.removeWhere((k, v) => v == null);
+    final _headers = <String, dynamic>{};
+    const Map<String, dynamic>? _data = null;
+    final _options = _setStreamType<List<CountryFull>>(Options(
+      method: 'GET',
+      headers: _headers,
+      extra: _extra,
+    )
+        .compose(
+          _dio.options,
+          '/name/${name}',
+          queryParameters: queryParameters,
+          data: _data,
+          cancelToken: cancelToken,
+        )
+        .copyWith(
+            baseUrl: _combineBaseUrls(
+          _dio.options.baseUrl,
+          baseUrl,
+        )));
+    final _result = await _dio.fetch<List<dynamic>>(_options);
+    late List<CountryFull> _value;
+    try {
+      _value = await compute(
+        deserializeCountryFullList,
         _result.data!.cast<Map<String, dynamic>>(),
       );
     } on Object catch (e, s) {
@@ -258,28 +314,28 @@ final themeProvider =
 // ignore: unused_element
 typedef ThemeRef
     = AutoDisposeProviderRef<({ThemeData lightTheme, ThemeData darkTheme})>;
-String _$allCountriesHash() => r'8e4a8a9356d55839645cbdc2c2981c049b2c35f5';
+String _$countriesAllHash() => r'fe2da1527f9d125f5bd59668f179094809232c9b';
 
-/// See also [allCountries].
-@ProviderFor(allCountries)
-final allCountriesProvider =
+/// See also [countriesAll].
+@ProviderFor(countriesAll)
+final countriesAllProvider =
     AutoDisposeFutureProvider<List<CountryModel>>.internal(
-  allCountries,
-  name: r'allCountriesProvider',
+  countriesAll,
+  name: r'countriesAllProvider',
   debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$allCountriesHash,
-  dependencies: <ProviderOrFamily>[restCountriesClientProvider],
+      const bool.fromEnvironment('dart.vm.product') ? null : _$countriesAllHash,
+  dependencies: <ProviderOrFamily>[restCountriesRepositoryProvider],
   allTransitiveDependencies: <ProviderOrFamily>{
-    restCountriesClientProvider,
-    ...?restCountriesClientProvider.allTransitiveDependencies
+    restCountriesRepositoryProvider,
+    ...?restCountriesRepositoryProvider.allTransitiveDependencies
   },
 );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef AllCountriesRef = AutoDisposeFutureProviderRef<List<CountryModel>>;
-String _$searchByTranslationHash() =>
-    r'85b215386cbc92a6ee7c90b2fd9c5b75791366c6';
+typedef CountriesAllRef = AutoDisposeFutureProviderRef<List<CountryModel>>;
+String _$countriesSearchByTranslationHash() =>
+    r'165da56f51703e5135b8e93f3cc7954a251fe7b7';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -302,27 +358,29 @@ class _SystemHash {
   }
 }
 
-/// See also [searchByTranslation].
-@ProviderFor(searchByTranslation)
-const searchByTranslationProvider = SearchByTranslationFamily();
+/// See also [countriesSearchByTranslation].
+@ProviderFor(countriesSearchByTranslation)
+const countriesSearchByTranslationProvider =
+    CountriesSearchByTranslationFamily();
 
-/// See also [searchByTranslation].
-class SearchByTranslationFamily extends Family<AsyncValue<List<CountryModel>>> {
-  /// See also [searchByTranslation].
-  const SearchByTranslationFamily();
+/// See also [countriesSearchByTranslation].
+class CountriesSearchByTranslationFamily
+    extends Family<AsyncValue<List<CountryModel>>> {
+  /// See also [countriesSearchByTranslation].
+  const CountriesSearchByTranslationFamily();
 
-  /// See also [searchByTranslation].
-  SearchByTranslationProvider call({
+  /// See also [countriesSearchByTranslation].
+  CountriesSearchByTranslationProvider call({
     required String term,
   }) {
-    return SearchByTranslationProvider(
+    return CountriesSearchByTranslationProvider(
       term: term,
     );
   }
 
   @override
-  SearchByTranslationProvider getProviderOverride(
-    covariant SearchByTranslationProvider provider,
+  CountriesSearchByTranslationProvider getProviderOverride(
+    covariant CountriesSearchByTranslationProvider provider,
   ) {
     return call(
       term: provider.term,
@@ -330,7 +388,7 @@ class SearchByTranslationFamily extends Family<AsyncValue<List<CountryModel>>> {
   }
 
   static final Iterable<ProviderOrFamily> _dependencies = <ProviderOrFamily>[
-    restCountriesClientProvider
+    restCountriesRepositoryProvider
   ];
 
   @override
@@ -338,8 +396,8 @@ class SearchByTranslationFamily extends Family<AsyncValue<List<CountryModel>>> {
 
   static final Iterable<ProviderOrFamily> _allTransitiveDependencies =
       <ProviderOrFamily>{
-    restCountriesClientProvider,
-    ...?restCountriesClientProvider.allTransitiveDependencies
+    restCountriesRepositoryProvider,
+    ...?restCountriesRepositoryProvider.allTransitiveDependencies
   };
 
   @override
@@ -347,33 +405,33 @@ class SearchByTranslationFamily extends Family<AsyncValue<List<CountryModel>>> {
       _allTransitiveDependencies;
 
   @override
-  String? get name => r'searchByTranslationProvider';
+  String? get name => r'countriesSearchByTranslationProvider';
 }
 
-/// See also [searchByTranslation].
-class SearchByTranslationProvider
+/// See also [countriesSearchByTranslation].
+class CountriesSearchByTranslationProvider
     extends AutoDisposeFutureProvider<List<CountryModel>> {
-  /// See also [searchByTranslation].
-  SearchByTranslationProvider({
+  /// See also [countriesSearchByTranslation].
+  CountriesSearchByTranslationProvider({
     required String term,
   }) : this._internal(
-          (ref) => searchByTranslation(
-            ref as SearchByTranslationRef,
+          (ref) => countriesSearchByTranslation(
+            ref as CountriesSearchByTranslationRef,
             term: term,
           ),
-          from: searchByTranslationProvider,
-          name: r'searchByTranslationProvider',
+          from: countriesSearchByTranslationProvider,
+          name: r'countriesSearchByTranslationProvider',
           debugGetCreateSourceHash:
               const bool.fromEnvironment('dart.vm.product')
                   ? null
-                  : _$searchByTranslationHash,
-          dependencies: SearchByTranslationFamily._dependencies,
+                  : _$countriesSearchByTranslationHash,
+          dependencies: CountriesSearchByTranslationFamily._dependencies,
           allTransitiveDependencies:
-              SearchByTranslationFamily._allTransitiveDependencies,
+              CountriesSearchByTranslationFamily._allTransitiveDependencies,
           term: term,
         );
 
-  SearchByTranslationProvider._internal(
+  CountriesSearchByTranslationProvider._internal(
     super._createNotifier, {
     required super.name,
     required super.dependencies,
@@ -387,13 +445,14 @@ class SearchByTranslationProvider
 
   @override
   Override overrideWith(
-    FutureOr<List<CountryModel>> Function(SearchByTranslationRef provider)
+    FutureOr<List<CountryModel>> Function(
+            CountriesSearchByTranslationRef provider)
         create,
   ) {
     return ProviderOverride(
       origin: this,
-      override: SearchByTranslationProvider._internal(
-        (ref) => create(ref as SearchByTranslationRef),
+      override: CountriesSearchByTranslationProvider._internal(
+        (ref) => create(ref as CountriesSearchByTranslationRef),
         from: from,
         name: null,
         dependencies: null,
@@ -406,12 +465,12 @@ class SearchByTranslationProvider
 
   @override
   AutoDisposeFutureProviderElement<List<CountryModel>> createElement() {
-    return _SearchByTranslationProviderElement(this);
+    return _CountriesSearchByTranslationProviderElement(this);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is SearchByTranslationProvider && other.term == term;
+    return other is CountriesSearchByTranslationProvider && other.term == term;
   }
 
   @override
@@ -425,19 +484,19 @@ class SearchByTranslationProvider
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-mixin SearchByTranslationRef
+mixin CountriesSearchByTranslationRef
     on AutoDisposeFutureProviderRef<List<CountryModel>> {
   /// The parameter `term` of this provider.
   String get term;
 }
 
-class _SearchByTranslationProviderElement
+class _CountriesSearchByTranslationProviderElement
     extends AutoDisposeFutureProviderElement<List<CountryModel>>
-    with SearchByTranslationRef {
-  _SearchByTranslationProviderElement(super.provider);
+    with CountriesSearchByTranslationRef {
+  _CountriesSearchByTranslationProviderElement(super.provider);
 
   @override
-  String get term => (origin as SearchByTranslationProvider).term;
+  String get term => (origin as CountriesSearchByTranslationProvider).term;
 }
 
 String _$restCountriesRepositoryHash() =>
@@ -463,5 +522,141 @@ final restCountriesRepositoryProvider =
 // ignore: unused_element
 typedef RestCountriesRepositoryRef
     = AutoDisposeProviderRef<RestCountriesRepository>;
+String _$countryByNameHash() => r'12b7238341f2b06b645e4dcd898c5e34d00ed459';
+
+/// See also [countryByName].
+@ProviderFor(countryByName)
+const countryByNameProvider = CountryByNameFamily();
+
+/// See also [countryByName].
+class CountryByNameFamily extends Family<AsyncValue<CountryFull>> {
+  /// See also [countryByName].
+  const CountryByNameFamily();
+
+  /// See also [countryByName].
+  CountryByNameProvider call({
+    required String fullName,
+  }) {
+    return CountryByNameProvider(
+      fullName: fullName,
+    );
+  }
+
+  @override
+  CountryByNameProvider getProviderOverride(
+    covariant CountryByNameProvider provider,
+  ) {
+    return call(
+      fullName: provider.fullName,
+    );
+  }
+
+  static final Iterable<ProviderOrFamily> _dependencies = <ProviderOrFamily>[
+    restCountriesRepositoryProvider
+  ];
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static final Iterable<ProviderOrFamily> _allTransitiveDependencies =
+      <ProviderOrFamily>{
+    restCountriesRepositoryProvider,
+    ...?restCountriesRepositoryProvider.allTransitiveDependencies
+  };
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'countryByNameProvider';
+}
+
+/// See also [countryByName].
+class CountryByNameProvider extends AutoDisposeFutureProvider<CountryFull> {
+  /// See also [countryByName].
+  CountryByNameProvider({
+    required String fullName,
+  }) : this._internal(
+          (ref) => countryByName(
+            ref as CountryByNameRef,
+            fullName: fullName,
+          ),
+          from: countryByNameProvider,
+          name: r'countryByNameProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$countryByNameHash,
+          dependencies: CountryByNameFamily._dependencies,
+          allTransitiveDependencies:
+              CountryByNameFamily._allTransitiveDependencies,
+          fullName: fullName,
+        );
+
+  CountryByNameProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.fullName,
+  }) : super.internal();
+
+  final String fullName;
+
+  @override
+  Override overrideWith(
+    FutureOr<CountryFull> Function(CountryByNameRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: CountryByNameProvider._internal(
+        (ref) => create(ref as CountryByNameRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        fullName: fullName,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<CountryFull> createElement() {
+    return _CountryByNameProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CountryByNameProvider && other.fullName == fullName;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, fullName.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin CountryByNameRef on AutoDisposeFutureProviderRef<CountryFull> {
+  /// The parameter `fullName` of this provider.
+  String get fullName;
+}
+
+class _CountryByNameProviderElement
+    extends AutoDisposeFutureProviderElement<CountryFull>
+    with CountryByNameRef {
+  _CountryByNameProviderElement(super.provider);
+
+  @override
+  String get fullName => (origin as CountryByNameProvider).fullName;
+}
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

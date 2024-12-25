@@ -37,6 +37,10 @@ class AppRouter extends RootStackRouter {
           path: '/',
           page: AllCountriesListRoute.page,
         ),
+        AutoRoute(
+          path: '/info',
+          page: CountryInfoRoute.page,
+        ),
       ];
 }
 
@@ -86,12 +90,24 @@ abstract class RestCountriesClient {
     ],
     @CancelRequest() CancelToken? cancelToken,
   });
+
+  @GET('/name/{name}')
+  Future<List<CountryFull>> byName({
+    @Path('name') required String name,
+    @CancelRequest() CancelToken? cancelToken,
+  });
 }
 
 List<CountryGeneral> deserializeCountryGeneralList(
   List<Map<String, dynamic>> json,
 ) {
   return json.map((e) => CountryGeneral.fromJson(e)).toList();
+}
+
+List<CountryFull> deserializeCountryFullList(
+  List<Map<String, dynamic>> json,
+) {
+  return json.map((e) => CountryFull.fromJson(e)).toList();
 }
 
 @riverpod
@@ -118,7 +134,10 @@ class RootApp extends ConsumerWidget {
   }
 }
 
-@freezed
+@Freezed(
+  toJson: false,
+  fromJson: true,
+)
 class CountryName with _$CountryName {
   factory CountryName({
     required String common,
@@ -130,18 +149,24 @@ class CountryName with _$CountryName {
       _$CountryNameFromJson(json);
 }
 
-@freezed
+@Freezed(
+  toJson: false,
+  fromJson: true,
+)
 class CountryFlags with _$CountryFlags {
   factory CountryFlags({
-    required String png,
-    required String alt,
+    String? png,
+    String? alt,
   }) = _CountryFlags;
 
   factory CountryFlags.fromJson(Map<String, Object?> json) =>
       _$CountryFlagsFromJson(json);
 }
 
-@freezed
+@Freezed(
+  toJson: false,
+  fromJson: true,
+)
 class CountryGeneral with _$CountryGeneral {
   factory CountryGeneral({
     required CountryName name,
@@ -152,19 +177,44 @@ class CountryGeneral with _$CountryGeneral {
       _$CountryGeneralFromJson(json);
 }
 
+@Freezed(
+  toJson: false,
+  fromJson: true,
+)
+class CountryFull with _$CountryFull {
+  factory CountryFull({
+    required CountryName name,
+    @Default([]) List<String> tld,
+    @Default([]) List<String> capital,
+    @Default([]) List<String> altSpellings,
+    @Default({}) Map<String, String> languages,
+    @Default({}) Map<String, CountryName> translations,
+    required double area,
+    required String flag,
+    required int population,
+    @Default([]) List<String> timezones,
+    required CountryFlags flags,
+    required CountryFlags coatOfArms,
+    required String startOfWeek,
+  }) = _CountryFull;
+
+  factory CountryFull.fromJson(Map<String, Object?> json) =>
+      _$CountryFullFromJson(json);
+}
+
 typedef CountryModel = ({
-  String imageUrl,
-  String imageAlt,
+  String? imageUrl,
+  String? imageAlt,
   String name,
   String otherNames,
 });
 
 @Riverpod(
   dependencies: [
-    restCountriesClient,
+    restCountriesRepository,
   ],
 )
-Future<List<CountryModel>> allCountries(
+Future<List<CountryModel>> countriesAll(
   Ref ref,
 ) async {
   final restCountriesRepository = ref.watch(restCountriesRepositoryProvider);
@@ -180,10 +230,10 @@ Future<List<CountryModel>> allCountries(
 
 @Riverpod(
   dependencies: [
-    restCountriesClient,
+    restCountriesRepository,
   ],
 )
-Future<List<CountryModel>> searchByTranslation(
+Future<List<CountryModel>> countriesSearchByTranslation(
   Ref ref, {
   required String term,
 }) async {
@@ -279,6 +329,20 @@ class RestCountriesRepository extends BaseRepository {
     return res.mapValue(_sortAndPrepare);
   }
 
+  Future<Result<CountryFull>> byName({
+    required String name,
+    required CancelToken cancelToken,
+  }) async {
+    final res = await wrapApiCall(
+      () => restCountriesClient.byName(
+        name: name,
+        cancelToken: cancelToken,
+      ),
+    );
+
+    return res.mapValue((list) => list.first);
+  }
+
   List<CountryModel> _sortAndPrepare(List<CountryGeneral> list) {
     list.sort((a, b) => a.name.official.compareTo(b.name.official));
 
@@ -367,7 +431,9 @@ class AllCountriesListScreen extends StatelessWidget {
 
     return Consumer(
       builder: (context, ref, child) {
-        final items = ref.watch(searchByTranslationProvider(term: term));
+        final items = ref.watch(countriesSearchByTranslationProvider(
+          term: term,
+        ));
 
         return MediaQuery.removePadding(
           context: context,
@@ -379,21 +445,8 @@ class AllCountriesListScreen extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final item = items[index];
 
-                  return ListTile(
-                    titleAlignment: ListTileTitleAlignment.titleHeight,
-                    onTap: () {},
-                    leading: SizedBox(
-                      width: 98,
-                      child: Align(
-                        alignment: Alignment.topLeft,
-                        child: Image.network(
-                          item.imageUrl,
-                          semanticLabel: item.imageAlt,
-                        ),
-                      ),
-                    ),
-                    title: Text(item.name),
-                    subtitle: Text(item.otherNames),
+                  return CountryModelWidget(
+                    item: item,
                   );
                 },
               );
@@ -431,7 +484,7 @@ class AllCountriesListScreen extends StatelessWidget {
       ),
       body: Consumer(
         builder: (context, ref, child) {
-          final items = ref.watch(allCountriesProvider).maybeWhen(
+          final items = ref.watch(countriesAllProvider).maybeWhen(
                 orElse: () => const <CountryModel>[],
                 data: (value) => value,
               );
@@ -441,26 +494,270 @@ class AllCountriesListScreen extends StatelessWidget {
             itemBuilder: (context, index) {
               final item = items[index];
 
-              return ListTile(
-                titleAlignment: ListTileTitleAlignment.titleHeight,
-                onTap: () {},
-                leading: SizedBox(
-                  width: 98,
-                  child: Align(
-                    alignment: Alignment.topLeft,
-                    child: Image.network(
-                      item.imageUrl,
-                      semanticLabel: item.imageAlt,
-                    ),
-                  ),
-                ),
-                title: Text(item.name),
-                subtitle: Text(item.otherNames),
+              return CountryModelWidget(
+                item: item,
               );
             },
             separatorBuilder: (context, index) => const Divider(),
           );
         },
+      ),
+    );
+  }
+}
+
+class CountryModelWidget extends StatelessWidget {
+  const CountryModelWidget({
+    super.key,
+    required this.item,
+  });
+
+  final CountryModel item;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget? image;
+    if (item.imageUrl case final imageUrl?) {
+      image = Align(
+        alignment: Alignment.topLeft,
+        child: Image.network(
+          imageUrl,
+          semanticLabel: item.imageAlt,
+        ),
+      );
+    }
+
+    return ListTile(
+      onTap: () => context.router.push(CountryInfoRoute(
+        name: item.name,
+      )),
+      leading: SizedBox(
+        width: 98,
+        child: image,
+      ),
+      title: Text(item.name),
+      subtitle: Text(item.otherNames),
+    );
+  }
+}
+
+@Riverpod(
+  dependencies: [
+    restCountriesRepository,
+  ],
+)
+Future<CountryFull> countryByName(
+  Ref ref, {
+  required String fullName,
+}) async {
+  final restCountriesRepository = ref.watch(restCountriesRepositoryProvider);
+
+  await ref.debounce();
+  final cancelToken = ref.dioCancelToken();
+
+  final res = await restCountriesRepository.byName(
+    name: fullName,
+    cancelToken: cancelToken,
+  );
+
+  return res.asFuture;
+}
+
+@RoutePage()
+class CountryInfoScreen extends StatelessWidget {
+  const CountryInfoScreen({
+    super.key,
+    required this.name,
+  });
+
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(name),
+      ),
+      body: Consumer(
+        builder: (context, ref, child) {
+          return ref
+              .watch(countryByNameProvider(
+                fullName: name,
+              ))
+              .maybeWhen(
+                orElse: () => const Center(
+                  child: CircularProgressIndicator(),
+                ),
+                data: (data) {
+                  return ListView(
+                    padding: const EdgeInsets.all(16) +
+                        MediaQuery.paddingOf(context),
+                    children: [
+                      _KeyValueItem(
+                        keyText: 'Official name: ',
+                        valueText: data.name.official,
+                      ),
+                      _KeyValueItem(
+                        keyText: 'Common name: ',
+                        valueText: data.name.official,
+                      ),
+                      if (data.altSpellings case final altNames
+                          when altNames.isNotEmpty)
+                        _KeyValueItem(
+                          keyText: 'Alternative names: ',
+                          valueText: altNames.join(', '),
+                        ),
+                      const Divider(),
+                      if (data.capital case final capital
+                          when capital.isNotEmpty) ...[
+                        _KeyValueItem(
+                          keyText: 'Capital: ',
+                          valueText: capital.join(', '),
+                        ),
+                        const Divider(),
+                      ],
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (data.flags.png case final png?
+                              when png.isNotEmpty)
+                            Expanded(
+                              child: _TextAndImage(
+                                text: 'Flag',
+                                data: data.flags,
+                              ),
+                            ),
+                          if (data.coatOfArms.png case final png?
+                              when png.isNotEmpty)
+                            Expanded(
+                              child: _TextAndImage(
+                                text: 'Coat of arms',
+                                data: data.coatOfArms,
+                              ),
+                            ),
+                        ],
+                      ),
+                      const Divider(),
+                      if (data.tld case final tld when tld.isNotEmpty) ...[
+                        _KeyValueItem(
+                          keyText: 'Top level domains: ',
+                          valueText: tld.join(', '),
+                        ),
+                        const Divider(),
+                      ],
+                      if (data.languages case final languages
+                          when languages.isNotEmpty) ...[
+                        _KeyValueItem(
+                          keyText: 'Languages: ',
+                          valueText: languages.values.join(', '),
+                        ),
+                        const Divider(),
+                      ],
+                      if (data.translations case final translations
+                          when translations.isNotEmpty) ...[
+                        Text(
+                          'Translations: ',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 16),
+                          child: Text(
+                            translations.entries
+                                .map((e) => e.value.official)
+                                .toSet()
+                                .join('\n'),
+                          ),
+                        ),
+                        const Divider(),
+                      ],
+                      if (data.timezones case final timezones
+                          when timezones.isNotEmpty) ...[
+                        _KeyValueItem(
+                          keyText: 'Timezones: ',
+                          valueText: timezones.join(', '),
+                        ),
+                        const Divider(),
+                      ],
+                      _KeyValueItem(
+                        keyText: 'Population: ',
+                        valueText: '${data.population}',
+                      ),
+                      const Divider(),
+                      _KeyValueItem(
+                        keyText: 'Area: ',
+                        valueText: '${data.area}',
+                      ),
+                      const Divider(),
+                      _KeyValueItem(
+                        keyText: 'Emoji flag: ',
+                        valueText: data.flag,
+                      ),
+                      const Divider(),
+                    ],
+                  );
+                },
+              );
+        },
+      ),
+    );
+  }
+}
+
+final class _TextAndImage extends StatelessWidget {
+  const _TextAndImage({
+    required this.text,
+    required this.data,
+  });
+
+  final String text;
+  final CountryFlags data;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          Text(text),
+          const SizedBox(
+            height: 8,
+          ),
+          Image.network(
+            data.png ?? '',
+            semanticLabel: data.alt,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+final class _KeyValueItem extends StatelessWidget {
+  const _KeyValueItem({
+    required this.keyText,
+    required this.valueText,
+  });
+
+  final String keyText;
+  final String valueText;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: keyText,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          TextSpan(
+            text: valueText,
+          ),
+        ],
       ),
     );
   }
