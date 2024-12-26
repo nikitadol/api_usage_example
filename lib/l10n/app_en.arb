@@ -1,0 +1,20 @@
+{
+  "typeSomething": "Type something",
+  "allCountries": "All countries",
+  "officialName": "Official name: ",
+  "commonName": "Common name: ",
+  "alternativeNames": "Alternative names: ",
+  "capital": "Capital: ",
+  "flag": "Flag",
+  "coatOfArms": "Coat of arms",
+  "topLevelDomains": "Top level domains: ",
+  "languages": "Languages: ",
+  "translations": "Translations: ",
+  "timezones": "Timezones: ",
+  "population": "Population: ",
+  "area": "Area: ",
+  "emojiFlag": "Emoji flag: ",
+  "notFound": "Not found",
+  "unknownError": "Unknown error",
+  "retry": "Retry"
+}

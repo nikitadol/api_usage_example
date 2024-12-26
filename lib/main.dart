@@ -1,11 +1,13 @@
 import 'dart:io';
 
 import 'package:api_usage_example/main.gr.dart';
+import 'package:api_usage_example/scroll_if_needed.dart';
 import 'package:async/async.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:retrofit/retrofit.dart';
@@ -130,6 +132,8 @@ class RootApp extends ConsumerWidget {
       darkTheme: darkTheme,
       debugShowCheckedModeBanner: false,
       routerConfig: ref.watch(routerProvider).config(),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
     );
   }
 }
@@ -425,7 +429,11 @@ class AllCountriesListScreen extends StatelessWidget {
 
     if (term.isEmpty) {
       return Center(
-        child: Text('Type something'),
+        child: Builder(
+          builder: (context) => Text(
+            AppLocalizations.of(context)!.typeSomething,
+          ),
+        ),
       );
     }
 
@@ -468,7 +476,9 @@ class AllCountriesListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('All countries'),
+        title: Text(
+          AppLocalizations.of(context)!.allCountries,
+        ),
         actions: [
           SearchAnchor(
             builder: (context, controller) => IconButton(
@@ -588,6 +598,8 @@ class CountryInfoScreen extends StatelessWidget {
       ),
       body: Consumer(
         builder: (context, ref, child) {
+          final localizations = AppLocalizations.of(context)!;
+
           final provider = countryByNameProvider(
             fullName: name,
           );
@@ -607,24 +619,24 @@ class CountryInfoScreen extends StatelessWidget {
                         MediaQuery.paddingOf(context),
                     children: [
                       _KeyValueItem(
-                        keyText: 'Official name: ',
+                        keyText: localizations.officialName,
                         valueText: data.name.official,
                       ),
                       _KeyValueItem(
-                        keyText: 'Common name: ',
+                        keyText: localizations.commonName,
                         valueText: data.name.official,
                       ),
                       if (data.altSpellings case final altNames
                           when altNames.isNotEmpty)
                         _KeyValueItem(
-                          keyText: 'Alternative names: ',
+                          keyText: localizations.alternativeNames,
                           valueText: altNames.join(', '),
                         ),
                       const Divider(),
                       if (data.capital case final capital
                           when capital.isNotEmpty) ...[
                         _KeyValueItem(
-                          keyText: 'Capital: ',
+                          keyText: localizations.capital,
                           valueText: capital.join(', '),
                         ),
                         const Divider(),
@@ -638,7 +650,7 @@ class CountryInfoScreen extends StatelessWidget {
                                 when png.isNotEmpty)
                               Expanded(
                                 child: _TextAndImage(
-                                  text: 'Flag',
+                                  text: localizations.flag,
                                   data: data.flags,
                                 ),
                               ),
@@ -646,7 +658,7 @@ class CountryInfoScreen extends StatelessWidget {
                                 when png.isNotEmpty)
                               Expanded(
                                 child: _TextAndImage(
-                                  text: 'Coat of arms',
+                                  text: localizations.coatOfArms,
                                   data: data.coatOfArms,
                                 ),
                               ),
@@ -656,7 +668,7 @@ class CountryInfoScreen extends StatelessWidget {
                       const Divider(),
                       if (data.tld case final tld when tld.isNotEmpty) ...[
                         _KeyValueItem(
-                          keyText: 'Top level domains: ',
+                          keyText: localizations.topLevelDomains,
                           valueText: tld.join(', '),
                         ),
                         const Divider(),
@@ -664,7 +676,7 @@ class CountryInfoScreen extends StatelessWidget {
                       if (data.languages case final languages
                           when languages.isNotEmpty) ...[
                         _KeyValueItem(
-                          keyText: 'Languages: ',
+                          keyText: localizations.languages,
                           valueText: languages.values.join(', '),
                         ),
                         const Divider(),
@@ -672,7 +684,7 @@ class CountryInfoScreen extends StatelessWidget {
                       if (data.translations case final translations
                           when translations.isNotEmpty) ...[
                         Text(
-                          'Translations: ',
+                          localizations.translations,
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                           ),
@@ -691,23 +703,23 @@ class CountryInfoScreen extends StatelessWidget {
                       if (data.timezones case final timezones
                           when timezones.isNotEmpty) ...[
                         _KeyValueItem(
-                          keyText: 'Timezones: ',
+                          keyText: localizations.timezones,
                           valueText: timezones.join(', '),
                         ),
                         const Divider(),
                       ],
                       _KeyValueItem(
-                        keyText: 'Population: ',
+                        keyText: localizations.population,
                         valueText: '${data.population}',
                       ),
                       const Divider(),
                       _KeyValueItem(
-                        keyText: 'Area: ',
+                        keyText: localizations.area,
                         valueText: '${data.area}',
                       ),
                       const Divider(),
                       _KeyValueItem(
-                        keyText: 'Emoji flag: ',
+                        keyText: localizations.emojiFlag,
                         valueText: data.flag,
                       ),
                       const Divider(),
@@ -791,14 +803,16 @@ class AppErrorWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localization = AppLocalizations.of(context)!;
+
     final String text;
     if (error case final AppError error) {
       text = error.map(
-        notFound: (error) => 'Not found',
-        unknown: (error) => 'Unknown error',
+        notFound: (error) => localization.notFound,
+        unknown: (error) => localization.unknownError,
       );
     } else {
-      text = '$error';
+      text = localization.unknownError;
     }
 
     final bool allowRetry;
@@ -813,18 +827,24 @@ class AppErrorWidget extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          spacing: 8,
-          children: [
-            Text(text),
-            if (retry case final retry? when allowRetry)
-              TextButton(
-                onPressed: retry,
-                child: Text('Retry'),
-              ),
-          ],
+      child: ScrollIfNeeded(
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 8,
+            children: [
+              Text(text),
+              if (retry case final retry? when allowRetry)
+                TextButton(
+                  onPressed: retry,
+                  child: Text(localization.retry),
+                ),
+              if (kDebugMode) ...[
+                Text('$error'),
+                Text('$stackTrace'),
+              ],
+            ],
+          ),
         ),
       ),
     );
