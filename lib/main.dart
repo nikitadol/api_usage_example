@@ -1,7 +1,5 @@
 import 'dart:io';
 
-import 'package:api_usage_example/navigation/app_router.dart';
-import 'package:api_usage_example/scroll_if_needed.dart';
 import 'package:async/async.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:dio/dio.dart';
@@ -10,82 +8,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:retrofit/retrofit.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'main.freezed.dart';
-part 'main.g.dart';
+import 'api/model/country_flags.dart';
+import 'api/model/country_full.dart';
+import 'api/model/country_general.dart';
+import 'api/rest_countries_client.dart';
+import 'navigation/app_router.dart';
+import 'scroll_if_needed.dart';
+
+part 'main.freezed.dart';part 'main.g.dart';
 
 void main() {
   runApp(ProviderScope(
     child: const RootApp(),
   ));
-}
-
-@riverpod
-Dio dio(Ref ref) {
-  final dio = Dio(BaseOptions(
-    baseUrl: 'https://restcountries.com/v3.1',
-  ));
-
-  ref.onDispose(dio.close);
-
-  return dio;
-}
-
-@Riverpod(
-  dependencies: [
-    dio,
-  ],
-)
-RestCountriesClient restCountriesClient(Ref ref) {
-  return RestCountriesClient(
-    ref.watch(dioProvider),
-  );
-}
-
-@RestApi(
-  parser: Parser.FlutterCompute,
-)
-abstract class RestCountriesClient {
-  factory RestCountriesClient(Dio dio) = _RestCountriesClient;
-
-  @GET('/all')
-  Future<List<CountryGeneral>> all({
-    @Query('fields') List<String> fields = const [
-      'name',
-      'flags',
-    ],
-    @CancelRequest() CancelToken? cancelToken,
-  });
-
-  @GET('/translation/{name}')
-  Future<List<CountryGeneral>> searchByTranslation({
-    @Path('name') required String name,
-    @Query('fields') List<String> fields = const [
-      'name',
-      'flags',
-    ],
-    @CancelRequest() CancelToken? cancelToken,
-  });
-
-  @GET('/name/{name}')
-  Future<List<CountryFull>> byName({
-    @Path('name') required String name,
-    @CancelRequest() CancelToken? cancelToken,
-  });
-}
-
-List<CountryGeneral> deserializeCountryGeneralList(
-  List<Map<String, dynamic>> json,
-) {
-  return json.map((e) => CountryGeneral.fromJson(e)).toList();
-}
-
-List<CountryFull> deserializeCountryFullList(
-  List<Map<String, dynamic>> json,
-) {
-  return json.map((e) => CountryFull.fromJson(e)).toList();
 }
 
 @riverpod
@@ -112,74 +49,6 @@ class RootApp extends ConsumerWidget {
       supportedLocales: AppLocalizations.supportedLocales,
     );
   }
-}
-
-@Freezed(
-  toJson: false,
-  fromJson: true,
-)
-class CountryName with _$CountryName {
-  factory CountryName({
-    required String common,
-    required String official,
-    @Default({}) Map<String, CountryName> nativeName,
-  }) = _CountryName;
-
-  factory CountryName.fromJson(Map<String, Object?> json) =>
-      _$CountryNameFromJson(json);
-}
-
-@Freezed(
-  toJson: false,
-  fromJson: true,
-)
-class CountryFlags with _$CountryFlags {
-  factory CountryFlags({
-    String? png,
-    String? alt,
-  }) = _CountryFlags;
-
-  factory CountryFlags.fromJson(Map<String, Object?> json) =>
-      _$CountryFlagsFromJson(json);
-}
-
-@Freezed(
-  toJson: false,
-  fromJson: true,
-)
-class CountryGeneral with _$CountryGeneral {
-  factory CountryGeneral({
-    required CountryName name,
-    required CountryFlags flags,
-  }) = _CountryGeneral;
-
-  factory CountryGeneral.fromJson(Map<String, Object?> json) =>
-      _$CountryGeneralFromJson(json);
-}
-
-@Freezed(
-  toJson: false,
-  fromJson: true,
-)
-class CountryFull with _$CountryFull {
-  factory CountryFull({
-    required CountryName name,
-    @Default([]) List<String> tld,
-    @Default([]) List<String> capital,
-    @Default([]) List<String> altSpellings,
-    @Default({}) Map<String, String> languages,
-    @Default({}) Map<String, CountryName> translations,
-    required double area,
-    required String flag,
-    required int population,
-    @Default([]) List<String> timezones,
-    required CountryFlags flags,
-    required CountryFlags coatOfArms,
-    required String startOfWeek,
-  }) = _CountryFull;
-
-  factory CountryFull.fromJson(Map<String, Object?> json) =>
-      _$CountryFullFromJson(json);
 }
 
 typedef CountryModel = ({
