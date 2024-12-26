@@ -16,21 +16,15 @@ import 'api/model/country_general.dart';
 import 'api/rest_countries_client.dart';
 import 'navigation/app_router.dart';
 import 'scroll_if_needed.dart';
+import 'ui/theme/theme.dart';
 
-part 'main.freezed.dart';part 'main.g.dart';
+part 'main.freezed.dart';
+part 'main.g.dart';
 
 void main() {
   runApp(ProviderScope(
     child: const RootApp(),
   ));
-}
-
-@riverpod
-({ThemeData lightTheme, ThemeData darkTheme}) theme(Ref ref) {
-  return (
-    lightTheme: ThemeData.light(),
-    darkTheme: ThemeData.dark(),
-  );
 }
 
 class RootApp extends ConsumerWidget {
