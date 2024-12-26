@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:api_usage_example/main.gr.dart';
+import 'package:api_usage_example/navigation/app_router.dart';
 import 'package:api_usage_example/scroll_if_needed.dart';
 import 'package:async/async.dart';
 import 'package:auto_route/auto_route.dart';
@@ -20,30 +20,6 @@ void main() {
   runApp(ProviderScope(
     child: const RootApp(),
   ));
-}
-
-@Riverpod(
-  keepAlive: true,
-)
-RootStackRouter router(Ref ref) {
-  return AppRouter();
-}
-
-@AutoRouterConfig(
-  replaceInRouteName: 'Screen|Page,Route',
-)
-class AppRouter extends RootStackRouter {
-  @override
-  List<AutoRoute> get routes => [
-        AutoRoute(
-          path: '/',
-          page: AllCountriesListRoute.page,
-        ),
-        AutoRoute(
-          path: '/info',
-          page: CountryInfoRoute.page,
-        ),
-      ];
 }
 
 @riverpod
@@ -546,9 +522,11 @@ class CountryModelWidget extends StatelessWidget {
     }
 
     return ListTile(
-      onTap: () => context.router.push(CountryInfoRoute(
-        name: item.name,
-      )),
+      onTap: () => context.router.push(
+        CountryInfoRoute(
+          name: item.name,
+        ),
+      ),
       leading: SizedBox(
         width: 98,
         child: image,

@@ -242,22 +242,6 @@ class _RestCountriesClient implements RestCountriesClient {
 // RiverpodGenerator
 // **************************************************************************
 
-String _$routerHash() => r'fae79b601cf8ff4177b1072bb855172bafe57b73';
-
-/// See also [router].
-@ProviderFor(router)
-final routerProvider = Provider<RootStackRouter>.internal(
-  router,
-  name: r'routerProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$routerHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef RouterRef = ProviderRef<RootStackRouter>;
 String _$dioHash() => r'4446728b3fc34e8040b35f573d741018c884b2dd';
 
 /// See also [dio].
