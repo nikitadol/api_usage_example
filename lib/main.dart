@@ -1,5 +1,4 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -7,14 +6,10 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'api/model/country_flags.dart';
 import 'api/model/country_full.dart';
-import 'common/repository/model/app_error.dart';
-import 'common/repository/model/country_model.dart';
 import 'common/repository/rest_countries_repository.dart';
 import 'common/ui/app_error_widget.dart';
 import 'common/ui/root_app.dart';
 import 'localization.dart';
-import 'navigation/app_router.dart';
-import 'common/ui/scroll_if_needed.dart';
 import 'utils/riverpod.dart';
 
 part 'main.g.dart';
@@ -23,194 +18,6 @@ void main() {
   runApp(ProviderScope(
     child: const RootApp(),
   ));
-}
-
-@Riverpod(
-  dependencies: [
-    restCountriesRepository,
-  ],
-)
-Future<List<CountryModel>> countriesAll(
-  Ref ref,
-) async {
-  final restCountriesRepository = ref.watch(restCountriesRepositoryProvider);
-
-  final cancelToken = ref.dioCancelToken();
-
-  final res = await restCountriesRepository.all(
-    cancelToken: cancelToken,
-  );
-
-  return res.asFuture;
-}
-
-@Riverpod(
-  dependencies: [
-    restCountriesRepository,
-  ],
-)
-Future<List<CountryModel>> countriesSearchByTranslation(
-  Ref ref, {
-  required String term,
-}) async {
-  final restCountriesRepository = ref.watch(restCountriesRepositoryProvider);
-
-  await ref.debounce();
-  final cancelToken = ref.dioCancelToken();
-
-  final res = await restCountriesRepository.searchByTranslation(
-    term: term,
-    cancelToken: cancelToken,
-  );
-
-  return res.asFuture;
-}
-
-@RoutePage()
-class AllCountriesListScreen extends StatelessWidget {
-  const AllCountriesListScreen({super.key});
-
-  Widget searchViewBuilder(Iterable<Widget> items) {
-    final String term;
-
-    if (items case [final Text text]) {
-      term = text.data?.trim() ?? '';
-    } else {
-      term = '';
-    }
-
-    if (term.isEmpty) {
-      return Center(
-        child: Builder(
-          builder: (context) => Text(
-            AppLocalizations.of(context)!.typeSomething,
-          ),
-        ),
-      );
-    }
-
-    return Consumer(
-      builder: (context, ref, child) {
-        final provider = countriesSearchByTranslationProvider(term: term);
-        final items = ref.watch(provider);
-
-        return MediaQuery.removePadding(
-          context: context,
-          removeTop: true,
-          child: items.when(
-            data: (items) {
-              return ListView.builder(
-                itemCount: items.length,
-                itemBuilder: (context, index) {
-                  final item = items[index];
-
-                  return CountryModelWidget(
-                    item: item,
-                  );
-                },
-              );
-            },
-            error: (e, s) => AppErrorWidget(
-              error: e,
-              stackTrace: s,
-              retry: () => ref.invalidate(provider),
-            ),
-            loading: () => const Center(
-              child: CircularProgressIndicator(),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          AppLocalizations.of(context)!.allCountries,
-        ),
-        actions: [
-          SearchAnchor(
-            builder: (context, controller) => IconButton(
-              onPressed: controller.openView,
-              icon: const Icon(Icons.search),
-            ),
-            suggestionsBuilder: (context, controller) => [
-              // Workaround for using riverpod with SearchAnchor
-              Text(controller.text),
-            ],
-            viewBuilder: searchViewBuilder,
-          ),
-        ],
-      ),
-      body: Consumer(
-        builder: (context, ref, child) {
-          final provider = countriesAllProvider;
-
-          return ref.watch(provider).when(
-                data: (items) => ListView.separated(
-                  itemCount: items.length,
-                  itemBuilder: (context, index) {
-                    final item = items[index];
-
-                    return CountryModelWidget(
-                      item: item,
-                    );
-                  },
-                  separatorBuilder: (context, index) => const Divider(),
-                ),
-                error: (e, s) => AppErrorWidget(
-                  error: e,
-                  stackTrace: s,
-                  retry: () => ref.invalidate(provider),
-                ),
-                loading: () => const Center(
-                  child: CircularProgressIndicator(),
-                ),
-              );
-        },
-      ),
-    );
-  }
-}
-
-class CountryModelWidget extends StatelessWidget {
-  const CountryModelWidget({
-    super.key,
-    required this.item,
-  });
-
-  final CountryModel item;
-
-  @override
-  Widget build(BuildContext context) {
-    Widget? image;
-    if (item.imageUrl case final imageUrl?) {
-      image = Align(
-        alignment: Alignment.topLeft,
-        child: Image.network(
-          imageUrl,
-          semanticLabel: item.imageAlt,
-        ),
-      );
-    }
-
-    return ListTile(
-      onTap: () => context.router.push(
-        CountryInfoRoute(
-          name: item.name,
-        ),
-      ),
-      leading: SizedBox(
-        width: 98,
-        child: image,
-      ),
-      title: Text(item.name),
-      subtitle: Text(item.otherNames),
-    );
-  }
 }
 
 @Riverpod(
