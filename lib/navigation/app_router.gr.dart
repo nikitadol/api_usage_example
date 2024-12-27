@@ -8,9 +8,10 @@
 // coverage:ignore-file
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'package:api_usage_example/main.dart' as _i2;
 import 'package:api_usage_example/screen/all_countries_list/all_countries_list_screen.dart'
     as _i1;
+import 'package:api_usage_example/screen/country_info_screen/country_info_screen.dart'
+    as _i2;
 import 'package:auto_route/auto_route.dart' as _i3;
 import 'package:flutter/material.dart' as _i4;
 
