@@ -23,7 +23,7 @@ RestCountriesRepository restCountriesRepository(Ref ref) {
   );
 }
 
-class RestCountriesRepository extends BaseRepository {
+final class RestCountriesRepository extends BaseRepository {
   final RestCountriesClient restCountriesClient;
 
   RestCountriesRepository({

@@ -1,6 +1,6 @@
 part of '../all_countries_list_screen.dart';
 
-class _CountryModelWidget extends StatelessWidget {
+final class _CountryModelWidget extends StatelessWidget {
   const _CountryModelWidget({
     required this.item,
   });

@@ -5,7 +5,7 @@ import '../../localization.dart';
 import '../../navigation/app_router.dart';
 import '../../ui/theme/theme.dart';
 
-class RootApp extends ConsumerWidget {
+final class RootApp extends ConsumerWidget {
   const RootApp({super.key});
 
   @override

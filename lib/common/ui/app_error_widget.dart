@@ -5,7 +5,7 @@ import '../../localization.dart';
 import '../repository/model/app_error.dart';
 import 'scroll_if_needed.dart';
 
-class AppErrorWidget extends StatelessWidget {
+final class AppErrorWidget extends StatelessWidget {
   const AppErrorWidget({
     super.key,
     required this.error,

@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-class ScrollIfNeeded extends StatelessWidget {
+final class ScrollIfNeeded extends StatelessWidget {
   const ScrollIfNeeded({
     super.key,
     this.primary,

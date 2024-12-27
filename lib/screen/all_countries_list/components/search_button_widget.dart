@@ -1,6 +1,6 @@
 part of '../all_countries_list_screen.dart';
 
-class _SearchButtonWidget extends StatelessWidget {
+final class _SearchButtonWidget extends StatelessWidget {
   const _SearchButtonWidget();
 
   static Widget _searchViewBuilder(Iterable<Widget> items) {
@@ -21,38 +21,8 @@ class _SearchButtonWidget extends StatelessWidget {
       );
     }
 
-    return Consumer(
-      builder: (context, ref, child) {
-        final provider = countriesSearchByTranslationProvider(term: term);
-        final items = ref.watch(provider);
-
-        return MediaQuery.removePadding(
-          context: context,
-          removeTop: true,
-          child: items.when(
-            data: (items) {
-              return ListView.builder(
-                itemCount: items.length,
-                itemBuilder: (context, index) {
-                  final item = items[index];
-
-                  return _CountryModelWidget(
-                    item: item,
-                  );
-                },
-              );
-            },
-            error: (e, s) => AppErrorWidget(
-              error: e,
-              stackTrace: s,
-              retry: () => ref.invalidate(provider),
-            ),
-            loading: () => const Center(
-              child: CircularProgressIndicator(),
-            ),
-          ),
-        );
-      },
+    return _SearchList(
+      term: term,
     );
   }
 
@@ -68,6 +38,43 @@ class _SearchButtonWidget extends StatelessWidget {
         Text(controller.text),
       ],
       viewBuilder: _searchViewBuilder,
+    );
+  }
+}
+
+final class _SearchList extends ConsumerWidget {
+  const _SearchList({
+    required this.term,
+  });
+
+  final String term;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final provider = countriesSearchByTranslationProvider(
+      term: term,
+    );
+
+    final items = ref.watch(provider);
+
+    return MediaQuery.removePadding(
+      context: context,
+      removeTop: true,
+      child: items.when(
+        loading: () => const AppLoader(),
+        error: (e, s) => AppErrorWidget(
+          error: e,
+          stackTrace: s,
+          retry: () => ref.invalidate(provider),
+        ),
+        data: (items) => ListView.separated(
+          itemCount: items.length,
+          itemBuilder: (context, index) => _CountryModelWidget(
+            item: items[index],
+          ),
+          separatorBuilder: (context, index) => const Divider(),
+        ),
+      ),
     );
   }
 }
