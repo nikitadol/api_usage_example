@@ -3,7 +3,7 @@
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
-part of 'main.dart';
+part of 'app_error.dart';
 
 // **************************************************************************
 // FreezedGenerator
@@ -139,9 +139,7 @@ class __$$AppErrorNotFoundImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$AppErrorNotFoundImpl
-    with DiagnosticableTreeMixin
-    implements _AppErrorNotFound {
+class _$AppErrorNotFoundImpl implements _AppErrorNotFound {
   _$AppErrorNotFoundImpl({required this.original, required this.stackTrace});
 
   @override
@@ -150,17 +148,8 @@ class _$AppErrorNotFoundImpl
   final StackTrace stackTrace;
 
   @override
-  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
+  String toString() {
     return 'AppError.notFound(original: $original, stackTrace: $stackTrace)';
-  }
-
-  @override
-  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
-    super.debugFillProperties(properties);
-    properties
-      ..add(DiagnosticsProperty('type', 'AppError.notFound'))
-      ..add(DiagnosticsProperty('original', original))
-      ..add(DiagnosticsProperty('stackTrace', stackTrace));
   }
 
   @override
@@ -306,9 +295,7 @@ class __$$AppErrorUnknownImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$AppErrorUnknownImpl
-    with DiagnosticableTreeMixin
-    implements _AppErrorUnknown {
+class _$AppErrorUnknownImpl implements _AppErrorUnknown {
   _$AppErrorUnknownImpl({required this.original, required this.stackTrace});
 
   @override
@@ -317,17 +304,8 @@ class _$AppErrorUnknownImpl
   final StackTrace stackTrace;
 
   @override
-  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
+  String toString() {
     return 'AppError.unknown(original: $original, stackTrace: $stackTrace)';
-  }
-
-  @override
-  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
-    super.debugFillProperties(properties);
-    properties
-      ..add(DiagnosticsProperty('type', 'AppError.unknown'))
-      ..add(DiagnosticsProperty('original', original))
-      ..add(DiagnosticsProperty('stackTrace', stackTrace));
   }
 
   @override

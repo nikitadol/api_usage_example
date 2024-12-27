@@ -191,29 +191,6 @@ class _CountriesSearchByTranslationProviderElement
   String get term => (origin as CountriesSearchByTranslationProvider).term;
 }
 
-String _$restCountriesRepositoryHash() =>
-    r'4a218a14006908005c2910719ce505ab37367df3';
-
-/// See also [restCountriesRepository].
-@ProviderFor(restCountriesRepository)
-final restCountriesRepositoryProvider =
-    AutoDisposeProvider<RestCountriesRepository>.internal(
-  restCountriesRepository,
-  name: r'restCountriesRepositoryProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$restCountriesRepositoryHash,
-  dependencies: <ProviderOrFamily>[restCountriesClientProvider],
-  allTransitiveDependencies: <ProviderOrFamily>{
-    restCountriesClientProvider,
-    ...?restCountriesClientProvider.allTransitiveDependencies
-  },
-);
-
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef RestCountriesRepositoryRef
-    = AutoDisposeProviderRef<RestCountriesRepository>;
 String _$countryByNameHash() => r'12b7238341f2b06b645e4dcd898c5e34d00ed459';
 
 /// See also [countryByName].

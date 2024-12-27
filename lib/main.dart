@@ -1,6 +1,3 @@
-import 'dart:io';
-
-import 'package:async/async.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -12,13 +9,13 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'api/model/country_flags.dart';
 import 'api/model/country_full.dart';
-import 'api/model/country_general.dart';
-import 'api/rest_countries_client.dart';
+import 'common/repository/model/app_error.dart';
+import 'common/repository/model/country_model.dart';
+import 'common/repository/rest_countries_repository.dart';
 import 'navigation/app_router.dart';
 import 'scroll_if_needed.dart';
 import 'ui/theme/theme.dart';
 
-part 'main.freezed.dart';
 part 'main.g.dart';
 
 void main() {
@@ -44,13 +41,6 @@ class RootApp extends ConsumerWidget {
     );
   }
 }
-
-typedef CountryModel = ({
-  String? imageUrl,
-  String? imageAlt,
-  String name,
-  String otherNames,
-});
 
 @Riverpod(
   dependencies: [
@@ -91,144 +81,6 @@ Future<List<CountryModel>> countriesSearchByTranslation(
   );
 
   return res.asFuture;
-}
-
-abstract class BaseRepository {
-  Future<Result<T>> wrapApiCall<T>(Future<T> Function() callback) async {
-    try {
-      final result = await callback();
-
-      return Result.value(result);
-    } on DioException catch (e, s) {
-      if (e.response case final response?) {
-        switch (response.statusCode) {
-          case HttpStatus.notFound:
-            return Result.error(
-              AppError.notFound(
-                original: e,
-                stackTrace: s,
-              ),
-            );
-        }
-      }
-
-      return Result.error(
-        AppError.unknown(
-          original: e,
-          stackTrace: s,
-        ),
-      );
-    }
-  }
-}
-
-@Riverpod(
-  dependencies: [
-    restCountriesClient,
-  ],
-)
-RestCountriesRepository restCountriesRepository(Ref ref) {
-  return RestCountriesRepository(
-    restCountriesClient: ref.watch(restCountriesClientProvider),
-  );
-}
-
-class RestCountriesRepository extends BaseRepository {
-  final RestCountriesClient restCountriesClient;
-
-  RestCountriesRepository({
-    required this.restCountriesClient,
-  });
-
-  Future<Result<List<CountryModel>>> searchByTranslation({
-    required String term,
-    required CancelToken cancelToken,
-  }) async {
-    term = term.trim();
-
-    if (term.isEmpty) {
-      return Result.value(const []);
-    }
-
-    final res = await wrapApiCall(
-      () => restCountriesClient.searchByTranslation(
-        name: term,
-        cancelToken: cancelToken,
-      ),
-    );
-
-    return res.mapValue(_sortAndPrepare);
-  }
-
-  Future<Result<List<CountryModel>>> all({
-    required CancelToken cancelToken,
-  }) async {
-    final res = await wrapApiCall(
-      () => restCountriesClient.all(
-        cancelToken: cancelToken,
-      ),
-    );
-
-    return res.mapValue(_sortAndPrepare);
-  }
-
-  Future<Result<CountryFull>> byName({
-    required String name,
-    required CancelToken cancelToken,
-  }) async {
-    final res = await wrapApiCall(
-      () => restCountriesClient.byName(
-        name: name,
-        cancelToken: cancelToken,
-      ),
-    );
-
-    return res.mapValue((list) => list.first);
-  }
-
-  List<CountryModel> _sortAndPrepare(List<CountryGeneral> list) {
-    list.sort((a, b) => a.name.official.compareTo(b.name.official));
-
-    return [
-      for (final item in list)
-        (
-          imageUrl: item.flags.png,
-          imageAlt: item.flags.alt,
-          name: item.name.official,
-          otherNames: item.name.nativeName.values
-              .map((e) => e.official)
-              .toSet()
-              .join('\n'),
-        ),
-    ];
-  }
-}
-
-@freezed
-class AppError with _$AppError {
-  factory AppError.notFound({
-    required Object original,
-    required StackTrace stackTrace,
-  }) = _AppErrorNotFound;
-
-  factory AppError.unknown({
-    required Object original,
-    required StackTrace stackTrace,
-  }) = _AppErrorUnknown;
-}
-
-extension AppErrorResult on ErrorResult {
-  AppError get asAppError => error as AppError;
-}
-
-extension ResultExtension<T> on Result<T> {
-  Result<R> mapValue<R>(R Function(T) callback) {
-    if (asValue case final valueResult?) {
-      return Result(() => callback(valueResult.value));
-    }
-
-    return asError!;
-  }
 }
 
 extension RefExtension on Ref {
