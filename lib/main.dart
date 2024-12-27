@@ -1,8 +1,6 @@
-import 'package:api_usage_example/utils/riverpod.dart';
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -12,9 +10,12 @@ import 'api/model/country_full.dart';
 import 'common/repository/model/app_error.dart';
 import 'common/repository/model/country_model.dart';
 import 'common/repository/rest_countries_repository.dart';
+import 'common/ui/app_error_widget.dart';
+import 'common/ui/root_app.dart';
+import 'localization.dart';
 import 'navigation/app_router.dart';
-import 'scroll_if_needed.dart';
-import 'ui/theme/theme.dart';
+import 'common/ui/scroll_if_needed.dart';
+import 'utils/riverpod.dart';
 
 part 'main.g.dart';
 
@@ -22,24 +23,6 @@ void main() {
   runApp(ProviderScope(
     child: const RootApp(),
   ));
-}
-
-class RootApp extends ConsumerWidget {
-  const RootApp({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final (:lightTheme, :darkTheme) = ref.watch(themeProvider);
-
-    return MaterialApp.router(
-      theme: lightTheme,
-      darkTheme: darkTheme,
-      debugShowCheckedModeBanner: false,
-      routerConfig: ref.watch(routerProvider).config(),
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-    );
-  }
 }
 
 @Riverpod(
@@ -455,68 +438,6 @@ final class _KeyValueItem extends StatelessWidget {
             text: valueText,
           ),
         ],
-      ),
-    );
-  }
-}
-
-class AppErrorWidget extends StatelessWidget {
-  const AppErrorWidget({
-    super.key,
-    required this.error,
-    required this.stackTrace,
-    this.retry,
-  });
-
-  final Object error;
-  final StackTrace stackTrace;
-  final void Function()? retry;
-
-  @override
-  Widget build(BuildContext context) {
-    final localization = AppLocalizations.of(context)!;
-
-    final String text;
-    if (error case final AppError error) {
-      text = error.map(
-        notFound: (error) => localization.notFound,
-        unknown: (error) => localization.unknownError,
-      );
-    } else {
-      text = localization.unknownError;
-    }
-
-    final bool allowRetry;
-    if (error case final AppError error) {
-      allowRetry = error.maybeMap(
-        orElse: () => true,
-        notFound: (_) => false,
-      );
-    } else {
-      allowRetry = true;
-    }
-
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: ScrollIfNeeded(
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            spacing: 8,
-            children: [
-              Text(text),
-              if (retry case final retry? when allowRetry)
-                TextButton(
-                  onPressed: retry,
-                  child: Text(localization.retry),
-                ),
-              if (kDebugMode) ...[
-                Text('$error'),
-                Text('$stackTrace'),
-              ],
-            ],
-          ),
-        ),
       ),
     );
   }
