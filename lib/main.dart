@@ -1,5 +1,5 @@
+import 'package:api_usage_example/utils/riverpod.dart';
 import 'package:auto_route/auto_route.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -81,28 +81,6 @@ Future<List<CountryModel>> countriesSearchByTranslation(
   );
 
   return res.asFuture;
-}
-
-extension RefExtension on Ref {
-  CancelToken dioCancelToken() {
-    final cancelToken = CancelToken();
-    onDispose(cancelToken.cancel);
-
-    return cancelToken;
-  }
-
-  Future<void> debounce([
-    Duration duration = const Duration(milliseconds: 400),
-  ]) async {
-    var didDispose = false;
-    onDispose(() => didDispose = true);
-
-    await Future<void>.delayed(duration);
-
-    if (didDispose) {
-      throw Exception('Cancelled');
-    }
-  }
 }
 
 @RoutePage()
